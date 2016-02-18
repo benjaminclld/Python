@@ -4,7 +4,7 @@
 from Tkinter import *
 from threading import *
 from scapy.all import *
-import time,socket,os,sched,socket
+import time,socket,os,sched,socket,sys
 
 
 
@@ -39,16 +39,20 @@ class GUI(Tk):
 		self.btncheck = Button(self, text='Lancer',command=self.go,height=1, width=10).grid(row=16,column=0,ipady=3)
 		self.btnstp = Button(self, text='Stop',command=self.stop,height=1, width=10).grid(row=16,column=1,ipady=3)
 		self.lbl8var = StringVar()
-		self.lbl8 = Label(self, textvariable =self.lbl8var).grid(row=18,column=0,columnspan=2,ipady=6)
+		self.lbl8 = Label(self, textvariable=self.lbl8var).grid(row=18,column=0,columnspan=2,ipady=6)
 		self.lbl8var.set("")
 		#Form2
 		self.lbl4 = Label(self, text="Adresse réseau local (10.0.0.0/24)").grid(row=2,column=3)
 		self.kall = StringVar()
-		self.inpkall = Entry(self, textvariable=self.go,width=40).grid(row=3,column=3)
-		self.btnkall = Button(self, text='Scan',command=self.scan,height=1, width=10).grid(row=4,column=3)
+		self.inpkall = Entry(self, textvariable=self.kall,width=40).grid(row=3,column=3)
+		self.btnkall = Button(self, text='Scan',command=self.scanevent,height=1, width=10).grid(row=4,column=3)
 		self.V_lstscn = StringVar()
-		self.lstscn = Listbox(self, listvariable=self.V_lstscn,width=40,height=15).grid(row=5,column=3,rowspan=10)
+		self.lstscn = Listbox(self, listvariable=self.V_lstscn,width=40,height=15).grid(row=5,column=3,rowspan=12)
+		self.V_lbl9 = StringVar()
+		self.lbl9 = Label(self, textvariable=self.V_lbl9).grid(row=18,column=3)
+		self.V_lbl9.set("Aucun scan effectuer")
 		#Form3
+		self.lbl4 = Label(self, text="Prochainnement sniffer de LAN").grid(row=2,column=6,columnspan=2)
 		#self.lbl4 = Label(self, text="Sniffeur de LAN").grid(row=2,column=4)
 		#self.V_lstsnff = StringVar()
 		#self.lstsnff = Listbox(self, listvariable=self.V_lstsnff,width=40,height=15).grid(row=3,column=4,rowspan=10)
@@ -56,16 +60,19 @@ class GUI(Tk):
 	def go(self):#fonction du bouton lancer
 		self.thread1 = Thread(target=self.cmmd)
 		self.thread1.start()
+	def scanevent(self):
+		self.thread2 = Thread(target=self.scan)
+		self.thread2.start()
 	def sniffing(self):#ecoute du réseau (en test)
 		scksnff = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
 		while True:
 			print scksnff.recvfrom(65565)
-	def scan(self):#scan du réseau (en test)
-		lstttl = ""
-		self.thread2 = Thread(self.Macaddrbroadcast(self.kall.get()))
-		#for i in self.thread2:
-		#	lstttl =  lstttl + self.thread2[i][1].hwsrv + "-" + self.thread2[i][1].psrc + " "
-		#self.V_lstscn.set(lstttl)
+	def scan(self):#scan du réseau
+		self.V_lbl9.set(" ")
+		self.lstttl = ""
+		self.V_lbl9.set("Scan en cours...")
+		self.Macaddrbroadcast(self.kall.get())
+		self.V_lbl9.set("Fin du scan (scroller pour plus de details)")
 	def stop(self):#stop l'arp poisonning
 		self.endwhl = "END"
 	def cmmd(self):#lancement des tâches
@@ -74,8 +81,9 @@ class GUI(Tk):
 		self.lbl8var.set("Vérification de la victime : "+ str(self.V_macvtc))
 		self.V_timer = self.timerspoof(self.date.get())
 		#self.F_ipforw(self.rdbvar.get())
-		self.thread1 = Thread(target=self.F_Go(self.V_timer[1],self.vtc.get(),self.rtr.get(),self.V_macvtc))
-		self.thread1.start()
+		#self.thread1 = Thread(target=
+		self.F_Go(self.V_timer[1],self.vtc.get(),self.rtr.get(),self.V_macvtc)#)
+		#self.thread1.start()
 	def F_Go(self,timerend,V_targ,V_gateway,Mac_targ):#boucle de l'arp poisonning
 		timer = time.time()
 		timi = self.date.get() - 1
@@ -100,12 +108,11 @@ class GUI(Tk):
 		except:
 			self.lbl8var.set("Erreur l'adresse " + ip + " n'est pas disponible")
 			pass
-	def Macaddrbroadcast(self,ip):
-		ans,unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=ip), timeout=2, retry=0)
+	def Macaddrbroadcast(self,ip):#scan du reseau IP x MAC
+		ans,unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=str(ip)), timeout=2, retry=0)
 		for s,r in ans:
-			print r.sprintf(r"%Ether.src% & %ARP.psrc%\\")
-		#ans,unans = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=ip), timeout=2, retry=0)
-		#return unans
+			self.lstttl = self.lstttl + r.sprintf(r"%ARP.psrc%==%Ether.src% ")
+		self.V_lstscn.set(self.lstttl)
 	def timerspoof(self,date):#delai d'arp poisonning
 		timer = time.time()
 		if date == "0":
