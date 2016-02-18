@@ -52,7 +52,7 @@ class GUI(Tk):
 		self.lbl9 = Label(self, textvariable=self.V_lbl9).grid(row=18,column=3)
 		self.V_lbl9.set("Aucun scan effectuer")
 		#Form3
-		self.lbl4 = Label(self, text="Prochainnement sniffer de LAN").grid(row=2,column=6,columnspan=2)
+		self.lbl4 = Label(self, text="Prochainement sniffer de LAN").grid(row=2,column=6,columnspan=2)
 		#self.lbl4 = Label(self, text="Sniffeur de LAN").grid(row=2,column=4)
 		#self.V_lstsnff = StringVar()
 		#self.lstsnff = Listbox(self, listvariable=self.V_lstsnff,width=40,height=15).grid(row=3,column=4,rowspan=10)
